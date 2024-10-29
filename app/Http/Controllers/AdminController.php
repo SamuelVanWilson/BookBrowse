@@ -6,13 +6,20 @@ use Illuminate\Http\Request;
 use App\Models\Admin;
 use App\Models\Categeory;
 use App\Models\Pencipta;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
     public function index(){
-        $data = Admin::filter(request(['search', 'category', 'penulis']))->latest()->paginate(12)->withQueryString();
+        if (request()->getRequestUri() == "/admin") {
+            return redirect('/admin?page=1');
+        }
+        $cache_key = 'book_cache_' . md5(request()->fullUrl());
+        $data = Cache::remember($cache_key,2592000, function(){
+            return Admin::filter(request(['search', 'category', 'penulis']))->latest()->paginate(12)->withQueryString();
+        });
         $category = Categeory::all();
         $title = 'Admin Dashboard';
 
